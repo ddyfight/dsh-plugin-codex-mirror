@@ -1,12 +1,11 @@
-# DSH Codex Mirror / Codex 实时镜像
+# DSH Codex Mirror
+
+English | [中文](README.zh.md)
 
 Read local Codex sessions live inside DeepSeek Harness, quote them into your DSH work, and hand
 progress back to Codex — without copying and pasting, and without modifying anything Codex owns.
 
-在 DeepSeek Harness 里实时只读查看本机 Codex 会话，把会话或消息引用到当前 DSH 草稿或新会话，
-再把 DSH 的进展整理成一份经你确认的交接文件交回 Codex。全程不修改 Codex 的原始文件。
-
-## What it does / 功能
+## What it does
 
 - **Live, read-only mirror.** Reads `~/.codex/sessions` and `~/.codex/archived_sessions` every
   second, incrementally: only appended bytes are parsed after the first scan.
@@ -28,7 +27,7 @@ progress back to Codex — without copying and pasting, and without modifying an
 - **Follows your theme.** The panel reads the DSH theme (light or dark) and re-renders when it
   changes.
 
-## Install / 安装
+## Install
 
 From GitHub:
 
@@ -39,18 +38,17 @@ dsh plugin --profile <profile> add github:ddyfight/dsh-plugin-codex-mirror
 From the prebuilt tarball attached to a release:
 
 ```sh
-dsh plugin --profile <profile> add https://github.com/ddyfight/dsh-plugin-codex-mirror/releases/download/v1.1.0/dsh-plugin-codex-mirror-1.1.0.tgz
+dsh plugin --profile <profile> add https://github.com/ddyfight/dsh-plugin-codex-mirror/releases/download/v1.1.2/dsh-plugin-codex-mirror-1.1.2.tgz
 ```
 
 On DSH Desktop, **Plugins → Add plugin** accepts the same GitHub URL or a local folder.
 
 The package ships no install or build scripts: it is plain ESM plus one prebuilt browser bundle.
 
-## Use / 使用
+## Use
 
 Open **Codex 实时镜像** from the sidebar. The first scan of a large Codex history takes a few
-seconds (about 8 s for 330 files / 11,000 messages here); the panel reports progress and afterwards
-only reads new bytes.
+seconds; the panel reports progress and afterwards only reads new bytes.
 
 - Left list: filter **对话 / 全部 / 归档**, search by title, working directory or last message.
 - Right pane: the selected conversation with day separators, long messages collapsed, and the
@@ -62,7 +60,7 @@ only reads new bytes.
 Handoff files live under `~/.dsh/codex-mirror/handoffs/<codexSessionId>/<dshSessionId>/`
 (`latest.md`, `manifest.json`, immutable `history/<sha256>.md`).
 
-## Configuration / 配置
+## Configuration
 
 The Codex data directory defaults to `~/.codex`. If Codex stores its sessions elsewhere, set it on
 the plugin row:
@@ -76,7 +74,7 @@ the plugin row:
 
 `~` is expanded. A missing directory is reported as an empty library rather than an error.
 
-## Privacy and limitations / 隐私与边界
+## Privacy and limitations
 
 - Read-only: the plugin never writes to `~/.codex`, never touches Codex authentication, SQLite
   databases or windows, and never sends a DSH task for you.
@@ -90,7 +88,7 @@ the plugin row:
 - Reading very large histories is bounded by bytes parsed per poll; the first scan is the slowest
   part and the panel shows it.
 
-## Development / 开发
+## Development
 
 ```sh
 node --test-isolation=none --test store.test.mjs handoff.test.mjs

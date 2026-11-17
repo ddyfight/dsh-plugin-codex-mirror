@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-codex-mirror",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Read-only live mirror of local Codex sessions inside DSH, with quote-to-draft, quote-to-new-session and a reviewed progress handoff file back to Codex.",
   "type": "module",
   "main": "./index.mjs",
@@ -21,6 +21,7 @@
     "locale/*.json",
     "icon.svg",
     "README.md",
+    "README.zh.md",
     "LICENSE"
   ],
   "keywords": [
