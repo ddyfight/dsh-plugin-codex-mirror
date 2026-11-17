@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Codex 实时镜像</title>
 <style>
-:root{color-scheme:dark;--bg:#15171c;--panel:#191c22;--card:#20232b;--card-hover:#252935;--line:#2f333c;--line-strong:#414550;--text:#e5e7eb;--muted:#9ca3af;--faint:#6b7280;--accent:#a9b4ff;--accent-soft:#262c46;--accent-line:#4d5a92;--ok:#9ee2b8;--warn:#f0c987;--danger:#f3a0a0;--menu:#242730;--toast:#2c3040;--injected:#1b1d23;--mark:#f3d16a44;--hover-border:#59607a;--primary-hover:#2f3760;font:14px/1.65 system-ui,'Microsoft YaHei',sans-serif;color:var(--text);background:var(--bg)}
-:root[data-theme=light]{color-scheme:light;--bg:#f6f7f9;--panel:#ffffff;--card:#ffffff;--card-hover:#eef0f5;--line:#e2e4ea;--line-strong:#cdd1da;--text:#1f2328;--muted:#5b6270;--faint:#878d99;--accent:#4653c7;--accent-soft:#e8eaff;--accent-line:#b9c0f2;--ok:#1a7f4b;--warn:#8a5a00;--danger:#b42318;--menu:#ffffff;--toast:#ffffff;--injected:#f2f3f6;--mark:#f7d77480;--hover-border:#a9b0c3;--primary-hover:#d7dbff}
+:root{color-scheme:dark;--bg:#15171c;--panel:#191c22;--card:#20232b;--card-hover:#252935;--line:#2f333c;--line-strong:#414550;--text:#e5e7eb;--muted:#9ca3af;--accent:#a9b4ff;--accent-soft:#262c46;--accent-line:#4d5a92;--ok:#9ee2b8;--warn:#f0c987;--danger:#f3a0a0;--menu:#242730;--toast:#2c3040;--injected:#1b1d23;--mark:#f3d16a44;--hover-border:#59607a;--primary-hover:#2f3760;--faint:#7c8290;font:14px/1.65 system-ui,'Microsoft YaHei',sans-serif;color:var(--text);background:var(--bg)}
+:root[data-theme=light]{color-scheme:light;--bg:#f6f7f9;--panel:#ffffff;--card:#ffffff;--card-hover:#eef0f5;--line:#e2e4ea;--line-strong:#cdd1da;--text:#1f2328;--muted:#5b6270;--accent:#4653c7;--accent-soft:#e8eaff;--accent-line:#b9c0f2;--ok:#1a7f4b;--warn:#8a5a00;--danger:#b42318;--menu:#ffffff;--toast:#ffffff;--injected:#f2f3f6;--mark:#f7d77480;--hover-border:#a9b0c3;--primary-hover:#d7dbff;--faint:#69707c}
 *{box-sizing:border-box}body{margin:0;display:flex;flex-direction:column;height:100dvh;overflow:hidden}
 button,input,textarea{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line-strong);border-radius:8px;padding:6px 11px}
 button{cursor:pointer;transition:background .12s,border-color .12s}button:hover{background:var(--card-hover);border-color:var(--hover-border)}
@@ -89,21 +89,21 @@ dialog p{margin:6px 0}textarea{display:block;width:100%;resize:vertical;margin:8
 <header>
   <div class="brand"><h1>Codex 实时镜像</h1><p class="muted">只读同步 · 右键或悬停可引用到 DSH 草稿</p></div>
   <span id="state" class="chip" role="status" aria-live="polite">连接中…</span>
-  <div class="header-actions"><button id="refresh" title="立即刷新（R）">刷新</button><button id="handoff" class="primary">写入 DSH 进展</button><button id="pause" aria-pressed="false">暂停</button></div>
+  <div class="header-actions"><button id="refresh" title="立即刷新（R）">刷新</button><button id="handoff">写入 DSH 进展</button><button id="pause" aria-pressed="false">暂停</button></div>
 </header>
 <main>
   <aside>
-    <div class="search"><input id="search" type="search" aria-label="搜索 Codex 会话" placeholder="搜索标题 / 目录 / 内容"><kbd>/</kbd></div>
+    <div class="search"><input id="search" type="search" aria-label="搜索 Codex 会话" placeholder="搜索会话，或在当前对话中查找"><kbd>/</kbd></div>
     <div class="filters" role="group" aria-label="筛选会话"><button data-filter="user" aria-pressed="true">对话</button><button data-filter="all" aria-pressed="false">全部</button><button data-filter="archived" aria-pressed="false">归档</button></div>
     <div id="list" role="listbox" aria-label="Codex 会话"></div>
     <p id="list-note" class="list-note" hidden></p>
     <p id="list-empty" class="empty" hidden>尚未发现 Codex 会话。请确认本机 Codex 使用默认目录 ~/.codex。</p>
   </aside>
-  <article id="scroll">
+  <article id="scroll" tabindex="0" aria-label="Codex 会话内容">
     <section id="meta" class="meta" hidden>
       <h2 id="meta-title"></h2>
       <div class="meta-sub"><span id="meta-cwd"></span><button id="copy-cwd" title="复制工作目录" hidden>复制目录</button><span id="meta-id"></span><span id="meta-status"></span></div>
-      <div class="meta-actions"><button id="quote-session-current">引用此会话到当前草稿</button><button id="quote-session-new">新建 DSH 会话并引用</button><button id="copy-conversation">复制全文</button></div>
+      <div class="meta-actions"><button id="quote-session-current" class="primary">引用此会话到当前草稿</button><button id="quote-session-new">新建 DSH 会话并引用</button><button id="copy-conversation">复制全文</button></div>
     </section>
     <div id="placeholder" class="placeholder">选择一个会话查看对话。</div>
     <div id="toolbar" class="toolbar" hidden>
@@ -118,14 +118,14 @@ dialog p{margin:6px 0}textarea{display:block;width:100%;resize:vertical;margin:8
 </main>
 <div id="menu" role="menu" hidden><button id="quote-session-new-menu">新建 DSH 会话并引用此会话</button><button id="quote-message-new">新建 DSH 会话并引用此消息</button><hr><button id="quote-session">引用会话到当前 DSH 草稿</button><button id="quote-message">引用消息到当前 DSH 草稿</button></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<dialog id="handoff-dialog"><h2>交接 DSH 进展给 Codex</h2><p class="muted">生成进展文件并保留历史版本。不会修改 Codex 原对话；保存后把接续指令粘贴到原 Codex 会话。</p><p id="handoff-target"></p><p id="handoff-source"></p><p id="handoff-status" role="status"></p><label for="handoff-progress">确认或编辑要交接的进展（最多 50,000 字符）</label><textarea id="handoff-progress" maxlength="50000" rows="12"></textarea><div class="dialog-actions"><button id="handoff-save" class="primary" disabled>保存交接文件</button><span id="handoff-counter" class="counter">0 / 50,000</span><button id="handoff-close">关闭</button></div><section id="handoff-output" hidden><p id="handoff-file"></p><label for="handoff-prompt">粘贴到原 Codex 会话的接续指令</label><textarea id="handoff-prompt" readonly rows="5"></textarea><button id="handoff-copy">复制接续指令</button></section></dialog>
+<dialog id="handoff-dialog"><h2>交接 DSH 进展给 Codex</h2><p class="muted">生成进展文件并保留历史版本。不会修改 Codex 原对话；保存后把接续指令粘贴到原 Codex 会话。</p><p id="handoff-target"></p><p id="handoff-source"></p><p id="handoff-status" role="status"></p><label for="handoff-progress">确认或编辑要交接的进展（最多 50,000 字符）</label><textarea id="handoff-progress" maxlength="50000" rows="12"></textarea><div class="dialog-actions"><button id="handoff-save" class="primary" disabled>保存交接文件</button><button id="handoff-retry" hidden>重试读取</button><span id="handoff-counter" class="counter">0 / 50,000</span><button id="handoff-close">关闭</button></div><section id="handoff-output" hidden><p id="handoff-file"></p><label for="handoff-prompt">粘贴到原 Codex 会话的接续指令</label><textarea id="handoff-prompt" readonly rows="5"></textarea><button id="handoff-copy">复制接续指令</button></section></dialog>
 <script>
 'use strict';
 const $=id=>document.getElementById(id), base=new URL('./',location.href);
 let selected=localStorage.getItem('codex-mirror:selected')||'';
 let sessions=[], currentSession=null, paused=false, timer, generation=0, lastList='', lastMessages='';
 let menuTarget=null, toastTimer, showContext=false, filter='user', follow=true, loadingDetail=false, lastQuery='', lastRenderedCount=0, searchTimer;
-let renderedIds=[], renderedDay='', renderedQuery='', lastRowKey='';
+let renderedIds=[], renderedDay='', renderedQuery='', lastRowKey='', focusList=false;
 const fmt=t=>{if(!t)return '';const d=new Date(t);return Number.isNaN(+d)?'':d.toLocaleString('zh-CN',{hour12:false})};
 const ago=t=>{const time=Date.parse(t||'');if(!time)return '';const diff=Date.now()-time;if(diff<0||diff<60000)return '刚刚';const m=Math.floor(diff/60000);if(m<60)return m+' 分钟前';const h=Math.floor(m/60);if(h<24)return h+' 小时前';const d=Math.floor(h/24);return d<30?d+' 天前':new Date(time).toLocaleDateString('zh-CN')};
 const count=n=>n>=10000?(n/10000).toFixed(1)+' 万':String(n);
@@ -180,15 +180,15 @@ let handoffState=null,progressRequest=null,progressTimeout;
 async function prepareHandoff(){
  if(!selected){showToast('请先选择目标 Codex 会话');return}
  const token=crypto.randomUUID();clearTimeout(progressTimeout);progressRequest=token;handoffState=null;
- $('handoff-output').hidden=true;$('handoff-save').disabled=true;$('handoff-progress').value='';$('handoff-source').textContent='';$('handoff-counter').textContent='0 / 50,000';$('handoff-target').textContent='正在读取目标 Codex 会话…';$('handoff-status').textContent='正在读取当前 DSH 会话的最近已落盘回复…';
+ $('handoff-output').hidden=true;$('handoff-save').disabled=true;$('handoff-retry').hidden=true;$('handoff-progress').value='';$('handoff-source').textContent='';$('handoff-counter').textContent='0 / 50,000';$('handoff-target').textContent='正在读取目标 Codex 会话…';$('handoff-status').textContent='正在读取当前 DSH 会话的最近已落盘回复…';
  if(!$('handoff-dialog').open)$('handoff-dialog').showModal();
- try{const target=await json('session?id='+encodeURIComponent(selected));if(progressRequest!==token)return;handoffState={codexSession:{id:target.id,title:(target.title||target.id).slice(0,512),cwd:target.cwd||''}};$('handoff-target').textContent='目标 Codex：'+handoffState.codexSession.title+' · '+target.id;progressTimeout=setTimeout(()=>{if(progressRequest===token){progressRequest=null;$('handoff-status').textContent='读取 DSH 超时，请关闭后重试'}},20000);window.parent.postMessage({source:'codex-mirror',type:'progress-request',requestId:token},location.origin)}catch(e){$('handoff-status').textContent='准备失败：'+e.message;progressRequest=null}
+ try{const target=await json('session?id='+encodeURIComponent(selected));if(progressRequest!==token)return;handoffState={codexSession:{id:target.id,title:(target.title||target.id).slice(0,512),cwd:target.cwd||''}};$('handoff-target').textContent='目标 Codex：'+handoffState.codexSession.title+' · '+target.id;progressTimeout=setTimeout(()=>{if(progressRequest===token){progressRequest=null;$('handoff-status').textContent='读取 DSH 超时，请关闭后重试';$('handoff-retry').hidden=false}},20000);window.parent.postMessage({source:'codex-mirror',type:'progress-request',requestId:token},location.origin)}catch(e){$('handoff-status').textContent='准备失败：'+e.message;$('handoff-retry').hidden=false;progressRequest=null}
 }
 window.addEventListener('message',event=>{
  const data=event.data;if(event.origin!==location.origin||event.source!==window.parent||data?.source!=='codex-mirror-host'||data.type!=='progress-result'||data.requestId!==progressRequest||!handoffState)return;
  clearTimeout(progressTimeout);progressRequest=null;
- if(!data.ok){$('handoff-status').textContent=data.message||'读取失败';return}
- if(!data.dshSession||typeof data.progress!=='string'){$('handoff-status').textContent='返回的进展格式不完整';return}
+ if(!data.ok){$('handoff-status').textContent=data.message||'读取失败';$('handoff-retry').hidden=false;return}
+ if(!data.dshSession||typeof data.progress!=='string'){$('handoff-status').textContent='返回的进展格式不完整';$('handoff-retry').hidden=false;return}
  handoffState.dshSession=data.dshSession;$('handoff-source').textContent='来源 DSH：'+data.dshSession.title+' · '+data.dshSession.id;$('handoff-progress').value=data.progress;$('handoff-counter').textContent=data.progress.length.toLocaleString('zh-CN')+' / 50,000';
  const notices=['这是最近已落盘的回复，请核对后编辑保存；可能包含中间进展。'];if(data.running)notices.push('DSH 任务仍在运行。');if(data.truncated)notices.push('自动预览已截断。');if(data.linkedCodexSessionId&&data.linkedCodexSessionId!==handoffState.codexSession.id)notices.push('注意：本次选择与该 DSH 会话先前引用的 Codex 来源不同，请确认目标。');
  $('handoff-status').textContent=notices.join(' ');$('handoff-save').disabled=false;
@@ -200,9 +200,9 @@ async function saveHandoff(){
  catch(e){$('handoff-status').textContent='保存失败：'+e.message}
  finally{$('handoff-save').disabled=false;$('handoff-close').disabled=false}
 }
-$('handoff').onclick=prepareHandoff;$('handoff-save').onclick=saveHandoff;$('handoff-close').onclick=()=>$('handoff-dialog').close();$('handoff-dialog').addEventListener('cancel',event=>{if($('handoff-close').disabled)event.preventDefault()});$('handoff-dialog').addEventListener('close',()=>{clearTimeout(progressTimeout);progressRequest=null});
+$('handoff').onclick=prepareHandoff;$('handoff-save').onclick=saveHandoff;$('handoff-retry').onclick=prepareHandoff;$('handoff-close').onclick=()=>$('handoff-dialog').close();$('handoff-dialog').addEventListener('cancel',event=>{if($('handoff-close').disabled)event.preventDefault()});$('handoff-dialog').addEventListener('close',()=>{clearTimeout(progressTimeout);progressRequest=null});
 $('handoff-progress').addEventListener('input',()=>{$('handoff-counter').textContent=$('handoff-progress').value.length.toLocaleString('zh-CN')+' / 50,000'});
-$('handoff-copy').onclick=async()=>{try{await navigator.clipboard.writeText($('handoff-prompt').value);showToast('已复制，在原 Codex 会话中粘贴并发送')}catch{$('handoff-prompt').focus();$('handoff-prompt').select();showToast('请按 Ctrl+C 复制所选接续指令')}};
+$('handoff-copy').onclick=async()=>{try{await navigator.clipboard.writeText($('handoff-prompt').value);$('handoff-status').textContent='已复制接续指令，请粘贴到原 Codex 会话并发送。'}catch{$('handoff-prompt').focus();$('handoff-prompt').select();$('handoff-status').textContent='请按 Ctrl+C 复制所选接续指令';}};
 function elapsedText(session){return ago(session.updatedAt)?ago(session.updatedAt)+'更新':'时间未知'}
 function visibleSessions(){
  const query=$('search').value.trim().toLowerCase();
@@ -216,12 +216,15 @@ function visibleSessions(){
 function list(){
  const rows=visibleSessions();
  const hiddenInternal=sessions.filter(s=>s.kind!=='user'&&!s.archived).length;
+ const hadFocus=$('list').contains(document.activeElement)||focusList;
+ focusList=false;
  $('list').replaceChildren();
+ $('handoff').disabled=!sessions.length;
  $('list-empty').hidden=Boolean(sessions.length);
  $('list-note').hidden=!(filter==='user'&&hiddenInternal>0);
  $('list-note').textContent='已隐藏 '+hiddenInternal+' 个内部会话（子代理 / 自动审查）';
  for(const s of rows){
-  const b=document.createElement('button');b.className='session';b.setAttribute('role','option');b.setAttribute('aria-selected',String(s.id===selected));b.title=(s.cwd||s.id)+'\n'+fmt(s.updatedAt);
+  const b=document.createElement('button');b.className='session';b.setAttribute('role','option');b.setAttribute('aria-selected',String(s.id===selected));b.title=(s.cwd||s.id)+'\n'+fmt(s.updatedAt);b.dataset.sessionId=s.id;
   const head=document.createElement('div');head.className='session-title';
   const dot=document.createElement('span');dot.className='dot'+(s.status==='running'?' running':'');
   const title=document.createElement('strong');title.textContent=s.title||s.id;
@@ -240,10 +243,14 @@ function list(){
   $('list').append(b);
  }
  if(!rows.length&&sessions.length){const hint=document.createElement('p');hint.className='empty';hint.textContent='没有匹配的会话。';$('list').append(hint)}
+ if(hadFocus){const active=$('list').querySelector('.session[aria-selected="true"]')||$('list').querySelector('.session');if(active){active.focus({preventScroll:true});active.scrollIntoView({block:'nearest'})}}
 }
 function selectSession(id){
  if(selected===id)return;
- selected=id;localStorage.setItem('codex-mirror:selected',selected);generation++;lastMessages='';lastQuery='';lastRenderedCount=0;currentSession=null;renderedIds=[];renderedDay='';renderedQuery='';list();void detail(generation).catch(e=>{$('state').textContent=e.message});
+ selected=id;localStorage.setItem('codex-mirror:selected',selected);generation++;lastMessages='';lastQuery='';lastRenderedCount=0;currentSession=null;renderedIds=[];renderedDay='';renderedQuery='';focusList=true;
+ $('scroll').scrollTop=0;$('jump').hidden=true;$('messages').replaceChildren();$('count').textContent='正在读取会话…';
+ list();
+ void detail(generation).catch(e=>{setState('读取失败','error',e.message);$('count').textContent='读取失败：'+e.message});
 }
 function renderMeta(s){
  $('meta').hidden=false;$('placeholder').hidden=true;$('toolbar').hidden=false;
@@ -311,7 +318,7 @@ async function detail(gen){
  loadingDetail=true;
  try{
   const s=await json('session?id='+encodeURIComponent(selected));
-  if(gen!==generation||paused)return;
+  if(gen!==generation)return;
   currentSession=s;
   const query=$('search').value.trim().toLowerCase();
   const signature=JSON.stringify([s.updatedAt,s.messageCount,s.status,s.title,s.cwd,query]);
@@ -330,7 +337,7 @@ async function detail(gen){
    $('messages').append(fragment);
   }else{
    day='';const fragment=document.createDocumentFragment();
-   for(const message of messages){const result=appendCard(fragment,message,s,day,query);day=result.day;matches+=result.hits}
+   for(const message of messages){const result=appendCard(fragment,message,s,day,query);day=result.day;if(!message.injected||showContext)matches+=result.hits}
    $('messages').replaceChildren(fragment);
   }
   $('messages').classList.toggle('hide-context',!showContext);
@@ -338,15 +345,19 @@ async function detail(gen){
   $('search-hits').textContent=query?(matches?matches+' 处匹配':'无匹配'):'';
   const visible=s.visibleCount??0;
   if(query&&queryChanged){
-   const first=$('messages').querySelector('mark');
-   if(first){follow=false;$('follow').checked=false;first.scrollIntoView({block:'center'});$('jump').hidden=false;$('jump').textContent='↓ 回到最新'}
+   const first=$('messages').querySelector(showContext?'mark':'.message:not(.injected) mark');
+   if(first){
+    const clipped=first.closest('.text.long');
+    if(clipped&&!clipped.classList.contains('open')){clipped.classList.add('open');const more=clipped.parentElement.querySelector('.msg-more');if(more)more.textContent='收起'}
+    follow=false;$('follow').checked=false;first.scrollIntoView({block:'center'});$('jump').hidden=false;$('jump').textContent='↓ 回到最新'
+   }
   }else if(follow&&nearBottom){box.scrollTop=box.scrollHeight;$('jump').hidden=true}
   else{$('jump').textContent=visible>lastRenderedCount&&lastRenderedCount>0?'↓ '+(visible-lastRenderedCount)+' 条新消息':'↓ 回到最新';$('jump').hidden=false}
   lastRenderedCount=visible;lastQuery=query;
   renderedIds=messages.map(m=>m.id);renderedQuery=query;renderedDay=day;
  }finally{loadingDetail=false}
 }
-function setState(text,kind){const node=$('state');node.textContent=text;node.style.color=kind==='error'?'var(--danger)':kind==='ok'?'var(--ok)':''}
+function setState(text,kind,detail){const node=$('state');if(node.textContent!==text)node.textContent=text;node.style.color=kind==='error'?'var(--danger)':kind==='ok'?'var(--ok)':'';node.title=detail||''}
 async function tick(){
  if(paused)return;
  try{
@@ -354,14 +365,14 @@ async function tick(){
   sessions=data.sessions||[];
   if(data.scan==='pending'){
    $('list-empty').hidden=true;$('list-note').hidden=false;$('list-note').textContent='正在扫描本机 Codex 会话… 已读取 '+(data.scanned||0)+' 个文件';
-   setState('首次扫描中…','');return;
+   setState('首次扫描中…','','正在读取 '+(data.root||'~/.codex'));return;
   }
-  if(data.scan==='failed')setState('扫描本机 Codex 会话失败，请检查 ~/.codex','error');
+  if(data.scan==='failed'){setState('扫描失败','error','无法读取 '+(data.root||'~/.codex'));$('list-empty').hidden=true;$('list-note').hidden=false;$('list-note').textContent='无法读取 '+(data.root||'~/.codex')+'，请检查目录权限或在插件设置中修改 root。';return;}
   if(data.rootMissing){
    $('list-empty').hidden=true;$('list-note').hidden=false;
-   $('list-note').textContent='未找到 Codex 数据目录（默认 ~/.codex）。本机可能未安装 Codex，或目录已自定义。';
+   $('list-note').textContent='未找到 Codex 数据目录 '+(data.root||'~/.codex')+'。本机可能未安装 Codex，或目录已自定义。';
    $('placeholder').textContent='没有可镜像的 Codex 会话。';
-   setState('未找到 Codex 数据目录','');return;
+   setState('未找到 Codex 目录','','查找目录：'+(data.root||'~/.codex'));return;
   }
   if(!selected&&sessions.length){const first=sessions.find(s=>s.kind==='user'&&!s.archived)||sessions[0];selected=first.id;localStorage.setItem('codex-mirror:selected',selected);generation++}
   const sig=JSON.stringify(sessions.map(s=>[s.id,s.updatedAt,s.messageCount,s.status,s.title]));
@@ -369,7 +380,7 @@ async function tick(){
   const row=sessions.find(s=>s.id===selected);
   const rowKey=row?[row.updatedAt,row.messageCount,row.status,row.title,row.cwd].join('|'):'';
   if(rowKey!==lastRowKey||!lastMessages){lastRowKey=rowKey;await detail(generation)}
-  if(!paused)setState('同步中 · '+new Date().toLocaleTimeString('zh-CN',{hour12:false}),'ok');
+  if(!paused)setState('已同步','ok','最近同步 '+new Date().toLocaleTimeString('zh-CN',{hour12:false}));
  }catch(e){setState(e.message+'，稍后重试','error')}
  finally{if(!paused)timer=setTimeout(tick,1000)}
 }
@@ -397,10 +408,13 @@ document.addEventListener('keydown',event=>{
  const tag=document.activeElement?.tagName;
  const typing=tag==='INPUT'||tag==='TEXTAREA';
  if(!typing&&event.key==='/'){event.preventDefault();$('search').focus();return}
- if(!typing&&(event.key==='j'||event.key==='ArrowDown'||event.key==='k'||event.key==='ArrowUp')){
+ const arrow=event.key==='ArrowDown'||event.key==='ArrowUp';
+ const listHasFocus=$('list').contains(document.activeElement)||document.activeElement===document.body||document.activeElement===document.documentElement;
+ if(!typing&&(event.key==='j'||event.key==='k'||(arrow&&listHasFocus))){
   const rows=visibleSessions();if(!rows.length)return;event.preventDefault();
+  const down=event.key==='j'||event.key==='ArrowDown';
   const index=rows.findIndex(s=>s.id===selected);
-  const next=event.key==='j'||event.key==='ArrowDown'?Math.min(rows.length-1,index+1):Math.max(0,index-1);
+  const next=down?Math.min(rows.length-1,index+1):Math.max(0,index-1);
   selectSession(rows[next].id);return;
  }
  if(!typing&&(event.key==='r'||event.key==='R')){$('refresh').click()}

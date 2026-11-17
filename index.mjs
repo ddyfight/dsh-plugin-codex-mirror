@@ -57,7 +57,8 @@ export function createHandler(store, handoffs, ready, html) {
         // Answer during the first scan instead of holding the request for half a minute.
         return json(res, 200, {sessions: store.listSessions(), pollMs: 1000, readOnly: true,
           scan: scan.phase, scanned: store.files?.size ?? 0,
-          ...(store.rootMissing ? {rootMissing: true, root: store.root} : {}),
+          root: typeof store.root === 'string' ? store.root : '',
+          ...(store.rootMissing ? {rootMissing: true} : {}),
           ...(scan.phase === 'failed' ? {error: 'scan-failed'} : {})});
       }
       await ready;
