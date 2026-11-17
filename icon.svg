@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36" role="img" aria-label="Codex session mirror">
+  <rect x="6.5" y="7.5" width="17" height="13" rx="3.5" fill="none" stroke="#9aa5ff" stroke-width="2"/>
+  <path d="M10.5 20.2v4.6l4.6-4.6" fill="none" stroke="#9aa5ff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="12.5" y="15.5" width="17" height="13" rx="3.5" fill="#6f7cf0"/>
+  <path d="M16.5 28.2v4.6l4.6-4.6z" fill="#6f7cf0"/>
+</svg>

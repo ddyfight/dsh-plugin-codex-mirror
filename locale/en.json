@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Codex session mirror",
+    "description": "Reads local Codex sessions live and lists them in a sidebar panel. Right-click a session or message to quote it into the current DSH draft or a new session, and save a reviewed progress file for Codex to continue from. Read-only: Codex files, authentication and windows are never modified."
+  }
+}

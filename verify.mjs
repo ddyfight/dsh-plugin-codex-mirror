@@ -27,14 +27,42 @@ const scope={fmt:()=> 'time'};vm.createContext(scope);vm.runInContext(reference,
 const quote=scope.referenceText({id:'codex-source',title:'源会话',cwd:'D:\\project',messages:[{role:'assistant',text:'对话内容'}]},null);
 assert.ok(quote.includes('codex-source')&&quote.includes('对话内容')&&quote.endsWith('本次任务要求：'));
 assert.ok(scope.referenceText({id:'s'}, {id:'msg',role:'user',text:'字'.repeat(15000)}).includes('片段已截断'));
+assert.ok(scope.referenceText({id:'s',messages:[{role:'user',text:'上下文',injected:true},{role:'assistant',text:'正文'}]},null).includes('正文'));
+assert.ok(!scope.referenceText({id:'s',messages:[{role:'user',text:'上下文',injected:true},{role:'assistant',text:'正文'}]},null).includes('上下文'));
+const highlightSource=script.slice(script.indexOf('function highlightInto('),script.indexOf('function dayLabel('));
+const highlightScope={document:{createDocumentFragment:()=>({parts:[],append(...items){this.parts.push(...items)}}),createElement:()=>({textContent:''})}};
+vm.createContext(highlightScope);vm.runInContext(highlightSource,highlightScope);
+const hitNode={textContent:'',appended:[],append(node){this.appended.push(node)}};
+assert.equal(highlightScope.highlightInto(hitNode,'abc ABC abc','abc'),3);
+assert.equal(highlightScope.highlightInto({textContent:'',append(){}},'没有匹配','xyz'),0);
+const daySource=script.slice(script.indexOf('function dayLabel('),script.indexOf('function conversationMarkdown('));
+const dayScope={Date,Math,Number,Intl};vm.createContext(dayScope);vm.runInContext(daySource,dayScope);
+const now=new Date(),pad=n=>String(n).padStart(2,'0');
+const todayKey=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+assert.equal(dayScope.dayLabel(todayKey),'今天');
+assert.equal(dayScope.dayLabel('2020-01-02'),'2020年1月2日');
 const store={listSessions:()=>[{id:'fixture'}],getSession:id=>id==='fixture'?{id,messages:[{role:'user',text:'中文'}]}:undefined};
 const handler=createHandler(store,store,Promise.resolve(),async()=>html);
-async function request(path, overrides={}) {
+async function requestWith(target, path, overrides={}) {
   let status,body;const headers={};const res={setHeader:(k,v)=>headers[k]=v,writeHead:(s,h)=>{status=s;Object.assign(headers,h)},end:b=>body=b};
-  await handler({method:'GET',url:'/api/codex-mirror/'+path,socket:{remoteAddress:'127.0.0.1'},headers:{host:'127.0.0.1:49629'},...overrides},res);
+  await target({method:'GET',url:'/api/codex-mirror/'+path,socket:{remoteAddress:'127.0.0.1'},headers:{host:'127.0.0.1:49629'},...overrides},res);
   return {status,body,headers};
 }
+const request=(path,overrides={})=>requestWith(handler,path,overrides);
 assert.equal((await request('sessions')).status,200);
+const sessionsBody=JSON.parse((await request('sessions')).body);
+assert.ok(['pending','ready'].includes(sessionsBody.scan));
+assert.equal(typeof sessionsBody.scanned,'number');
+let releaseScan;
+const delayedScan=new Promise(resolve=>{releaseScan=resolve});
+const slowStore={listSessions:()=>[],getSession:()=>undefined,files:new Map([['a',1],['b',2]])};
+const slowHandler=createHandler(slowStore,slowStore,delayedScan,async()=>html);
+const duringScan=await requestWith(slowHandler,'sessions');
+assert.equal(duringScan.status,200);
+assert.equal(JSON.parse(duringScan.body).scan,'pending');
+assert.equal(JSON.parse(duringScan.body).scanned,2);
+releaseScan();
+assert.equal((await request('session?id=fixture')).status,200);
 assert.equal(JSON.parse((await request('session?id=fixture')).body).messages[0].text,'中文');
 assert.equal((await request('session?id=missing')).status,404);
 assert.equal((await request('sessions',{method:'POST'})).status,405);
@@ -42,4 +70,4 @@ assert.equal((await request('sessions',{headers:{host:'evil.example'}})).status,
 assert.equal((await request('sessions',{headers:{host:'127.0.0.1:49629',origin:'http://evil.example'}})).status,403);
 assert.equal((await request('sessions',{socket:{remoteAddress:'10.0.0.1'}})).status,403);
 assert.ok((await request('view')).headers['Content-Security-Policy'].includes("frame-ancestors 'self'"));
-console.log('PASS: client factory, sidebar/main registration, inline script syntax, read-only routes, loopback/origin checks, HTML CSP.');
+console.log('PASS: client factory, sidebar/main registration, inline script syntax, read-only routes, loopback/origin checks, HTML CSP, reference/context/search/day helpers.');

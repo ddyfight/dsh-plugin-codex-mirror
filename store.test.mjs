@@ -164,6 +164,25 @@ test('drops Codex attachment preambles but keeps the prompt that follows', async
   } finally { await cleanup(root, store); }
 });
 
+test('treats a missing Codex root as an empty library and recovers when it appears', async () => {
+  const base = await mkdtemp(path.join(fileURLToPath(new URL('.', import.meta.url)), '.fixture-'));
+  const root = path.join(base, 'no-codex-here');
+  const store = new MirrorStore({ root, pollMs: 15 });
+  try {
+    await store.start();
+    assert.equal(store.rootMissing, true);
+    assert.deepEqual(store.listSessions(), []);
+    await mkdir(path.join(root, 'sessions', '2026', '10', '28'), { recursive: true });
+    const id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    await writeFile(path.join(root, 'sessions', '2026', '10', '28', `rollout-${id}.jsonl`), meta(id) + response('u1', 'user', '恢复了'));
+    await waitFor(() => store.rootMissing === false && store.getSession(id));
+    assert.equal(store.getSession(id).messages[0].text, '恢复了');
+  } finally {
+    await store.stop();
+    await rm(base, { recursive: true, force: true });
+  }
+});
+
 test('reparses truncation and discovers new sessions while polling', async () => {
   const root = await fixture();
   const id = '33333333-3333-4333-8333-333333333333';

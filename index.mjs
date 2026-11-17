@@ -39,10 +39,13 @@ async function readJsonBody(req) {
 }
 
 export function createHandler(store, handoffs, ready, html) {
+  const scan = { phase: 'pending' };
+  Promise.resolve(ready).then(() => { scan.phase = 'ready'; }, error => {
+    scan.phase = 'failed'; scan.error = error; console.error('[codex-mirror] scan', error);
+  });
   return async (req, res) => {
     if (!isLocal(req)) return json(res, 403, {error: 'local-only'});
     try {
-      await ready;
       const url = new URL(req.url, 'http://localhost');
       if (url.pathname === `${base}/view`) {
         if (req.method !== 'GET') return json(res, 405, {error: 'read-only'});
@@ -51,8 +54,13 @@ export function createHandler(store, handoffs, ready, html) {
       }
       if (url.pathname === `${base}/sessions`) {
         if (req.method !== 'GET') return json(res, 405, {error: 'read-only'});
-        return json(res, 200, {sessions: store.listSessions(), pollMs: 1000, readOnly: true});
+        // Answer during the first scan instead of holding the request for half a minute.
+        return json(res, 200, {sessions: store.listSessions(), pollMs: 1000, readOnly: true,
+          scan: scan.phase, scanned: store.files?.size ?? 0,
+          ...(store.rootMissing ? {rootMissing: true, root: store.root} : {}),
+          ...(scan.phase === 'failed' ? {error: 'scan-failed'} : {})});
       }
+      await ready;
       if (url.pathname === `${base}/session`) {
         if (req.method !== 'GET') return json(res, 405, {error: 'read-only'});
         const session = store.getSession(url.searchParams.get('id'));
@@ -80,9 +88,11 @@ export function createHandler(store, handoffs, ready, html) {
   };
 }
 
-export function apply(ctx) {
+export function apply(ctx, config) {
+  const configured = typeof config?.root === 'string' ? config.root.trim() : '';
+  const root = configured ? configured.replace(/^~(?=$|[\\/])/, homedir()) : join(homedir(), '.codex');
   ctx.effect(() => {
-    const store = new MirrorStore({root: join(homedir(), '.codex'), pollMs: 1000});
+    const store = new MirrorStore({root, pollMs: 1000});
     const handoffs = new HandoffStore({root: join(homedir(), '.dsh', 'codex-mirror', 'handoffs')});
     store.on('error', error => console.error('[codex-mirror]', error));
     const ready = store.start();

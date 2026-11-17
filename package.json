@@ -1,12 +1,52 @@
 {
   "name": "dsh-plugin-codex-mirror",
-  "version": "1.0.0",
-  "description": "Read-only real-time Codex session mirror for DSH with quote-to-new-session and progress handoff.",
+  "version": "1.1.0",
+  "description": "Read-only live mirror of local Codex sessions inside DSH, with quote-to-draft, quote-to-new-session and a reviewed progress handoff file back to Codex.",
   "type": "module",
   "main": "./index.mjs",
-  "exports": {".": "./index.mjs", "./client": "./client.js", "./package.json": "./package.json"},
+  "exports": {
+    ".": "./index.mjs",
+    "./client": "./client.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.mjs",
+    "client.js",
+    "store.mjs",
+    "handoff.mjs",
+    "view.html",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "codex",
+    "session",
+    "mirror",
+    "handoff"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ddyfight/dsh-plugin-codex-mirror.git"
+  },
+  "homepage": "https://github.com/ddyfight/dsh-plugin-codex-mirror#readme",
+  "bugs": {
+    "url": "https://github.com/ddyfight/dsh-plugin-codex-mirror/issues"
+  },
+  "author": "ddyfight",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "dsh": {
-    "bundle": {"patch": "./cordis.patch.yml"},
+    "bundle": { "patch": "./cordis.patch.yml" },
     "client": {
       "platform": "web",
       "immediately": true,
@@ -20,7 +60,7 @@
     }
   },
   "scripts": {
-    "test": "node --test-isolation=none --test store.test.mjs handoff.test.mjs"
-  },
-  "license": "MIT"
+    "test": "node --test-isolation=none --test store.test.mjs handoff.test.mjs",
+    "verify": "node verify.mjs && node verify-new-session.mjs && node verify-progress.mjs && node verify-handoff-http.mjs"
+  }
 }

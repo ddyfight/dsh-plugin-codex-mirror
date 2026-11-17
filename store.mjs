@@ -90,6 +90,7 @@ export class MirrorStore extends EventEmitter {
     this.timer = null;
     this.running = false;
     this.work = null;
+    this.rootMissing = false;
   }
 
   async start() {
@@ -137,8 +138,21 @@ export class MirrorStore extends EventEmitter {
   }
 
   async _scan() {
-    const rootStat = await stat(this.root);
+    let rootStat;
+    try { rootStat = await stat(this.root); }
+    catch (error) {
+      if (!absent(error)) throw error;
+      // A machine without Codex is a supported state, not a broken plugin.
+      this.rootMissing = true;
+      if (this.sessions.size || this.files.size) {
+        this.files.clear();
+        this.sessions = new Map();
+        this.emit('change', { id: 'root-missing' });
+      }
+      return;
+    }
     if (!rootStat.isDirectory()) throw new Error(`Codex root is not a directory: ${this.root}`);
+    this.rootMissing = false;
     let dirty = false;
     dirty = await this._read(this.index, record => {
       const id = record.id ?? record.session_id;
