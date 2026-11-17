@@ -1,0 +1,26 @@
+{
+  "name": "dsh-plugin-codex-mirror",
+  "version": "1.0.0",
+  "description": "Read-only real-time Codex session mirror for DSH with quote-to-new-session and progress handoff.",
+  "type": "module",
+  "main": "./index.mjs",
+  "exports": {".": "./index.mjs", "./client": "./client.js", "./package.json": "./package.json"},
+  "dsh": {
+    "bundle": {"patch": "./cordis.patch.yml"},
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-sidebar",
+        "@deepseek-ai/dsh-client-ui-workspace",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "scripts": {
+    "test": "node --test-isolation=none --test store.test.mjs handoff.test.mjs"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import {readFile} from 'node:fs/promises';
+let plugin;
+const handlers={},ref={current:null},opened=[],created=[],released=[],drafts=[],responses=[],memory=new Map();
+const origin='http://127.0.0.1:49629';
+vm.runInNewContext(await readFile(new URL('./client.js',import.meta.url),'utf8'),{window:{__ModuleLoader__:{load:bundle=>plugin=bundle.factory(()=>({createRef:()=>ref,createElement:()=>({})}))},addEventListener:(name,callback)=>handlers[name]=callback,removeEventListener:()=>{}},document:{baseURI:origin+'/'},location:{origin},localStorage:{getItem:key=>memory.get(key),setItem:(key,value)=>memory.set(key,value)},URL,console});
+let resolveCreate;
+let ready=Promise.resolve(),phase='ready',blocked=false,creationError;
+const ctx={effect:fn=>fn(),slots:{inject:()=>{}},sessions:{list:{getSnapshot:()=>({byId:{old:{id:'old',retainedBy:{mainView:1},updatedAt:'2026-10-29'}}})},create:async options=>{created.push(options);if(creationError)throw creationError;return new Promise(resolve=>resolveCreate=resolve)},retain:id=>({ready,binding:{id},release:()=>released.push(id)})},workspaces:{list:{getSnapshot:()=>({phase,items:[{workspaceId:'other',sessionIds:[]},{workspaceId:'owner',sessionIds:['old']}]})}},conversation:{input:{requestDraftInitialization:(binding,options)=>{drafts.push({binding,options});return blocked?'blocked':'applied'}}},uiWorkspace:{openSession:id=>opened.push(id)}};
+plugin.apply(ctx);const source={postMessage:data=>responses.push(data)};ref.current={contentWindow:source};
+const event={origin,source,data:{source:'codex-mirror',type:'quote',destination:'new',requestId:'new1',prompt:'源引用内容',codexSessionId:'codex-source'}};
+const pending=handlers.message(event);await handlers.message({...event,data:{...event.data,requestId:'duplicate'}});assert.equal(created.length,1);assert.equal(responses.at(-1).ok,false);
+resolveCreate('new-dsh');await pending;assert.equal(opened.at(-1),'new-dsh');assert.equal(created[0].workspaceId,'owner');assert.equal(created[0].sessionId,undefined);assert.equal(drafts[0].binding.id,'new-dsh');assert.equal(JSON.parse(memory.get('codex-mirror:links'))['new-dsh'],'codex-source');assert.equal(released.at(-1),'new-dsh');
+phase='pending';await assert.rejects(()=>plugin.createQuotedSession(ctx,'quote'),/工作区尚未准备/);phase='ready';
+creationError=Error('offline');await assert.rejects(()=>plugin.createQuotedSession(ctx,'quote'),/offline/);creationError=null;
+blocked=true;const rejected=plugin.createQuotedSession(ctx,'quote');resolveCreate('blocked-dsh');await assert.rejects(()=>rejected,/草稿暂不可写/);assert.equal(opened.includes('blocked-dsh'),false);assert.equal(released.at(-1),'blocked-dsh');
+console.log('PASS: new independent session, owning workspace, automatic reference draft, origin linkage, duplicate-click guard, workspace/create/draft failures and temporary reference cleanup.');
