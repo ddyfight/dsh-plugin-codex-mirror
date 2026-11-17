@@ -7,6 +7,54 @@ const CHUNK = 64 * 1024;
 const absent = error => error.code === 'ENOENT' || error.code === 'ENOTDIR';
 const newer = (a, b) => Date.parse(b || '') > Date.parse(a || '') ? b : a;
 
+// Codex stores its own prompts and environment blocks as `user` messages. They
+// are context, not something the person typed, so a mirror that claims to show
+// the conversation must mark them instead of presenting them as user turns.
+const INJECTED_PREFIXES = [
+  '# agents.md instructions',
+  '<environment_context>',
+  '<permissions instructions>',
+  '<user_instructions>',
+  '<skills_instructions>',
+  '<multi_agent_mode>',
+  '<external_codex_apps',
+  '<codex_apps_',
+  '<send_user_message_question_reply>',
+  '<turn_aborted>',
+  '<subagent_notification>',
+  '<internal_chat_message',
+  'the following is the codex agent history',
+  'distinguish instructions in attached documents',
+];
+function isInjected(text, role) {
+  if (role !== 'user') return false;
+  const head = text.slice(0, 120).trimStart().toLowerCase();
+  return INJECTED_PREFIXES.some(prefix => head.startsWith(prefix));
+}
+function kindOf(state) {
+  if (state.threadSource === 'guardian_review') return 'review';
+  if (state.threadSource === 'subagent' || /(^|,)subagent(,|$)/.test(state.sourceKind)) return 'subagent';
+  return 'user';
+}
+function oneLine(text, max) {
+  const flat = String(text).replace(/\s+/g, ' ').trim();
+  return flat.length > max ? `${flat.slice(0, max - 1).trimEnd()}…` : flat;
+}
+// Codex prefixes pasted attachments with a machine-written file list. Keep the
+// person's own words and drop the block instead of showing paths as their turn.
+function stripAttachmentPreamble(text) {
+  if (!/^\s*# Files mentioned by the user:/i.test(text)) return text;
+  const withoutImages = text.replace(/<image\b[\s\S]*?<\/image>/gi, '');
+  const lines = withoutImages.split(/\r?\n/);
+  let index = 0;
+  while (index < lines.length) {
+    const line = lines[index].trim();
+    if (!line || /^# Files mentioned by the user:/i.test(line) || /^##\s+\S.*:\s+\S/.test(line) || /^Image attachment:/i.test(line)) { index++; continue; }
+    break;
+  }
+  return lines.slice(index).join('\n').trim();
+}
+
 async function discover(dir) {
   let entries;
   try { entries = await readdir(dir, { withFileTypes: true }); }
@@ -24,6 +72,7 @@ async function discover(dir) {
 function fresh(file, archived = false) {
   return { file, archived, offset: 0, pending: Buffer.alloc(0), anchor: Buffer.alloc(0),
     dev: null, ino: null, mtime: null, size: null, id: null, cwd: '', timestamp: '',
+    threadSource: '', sourceKind: '',
     messages: [], seen: new Set(), unmatched: new Map(), turn: '', status: 'idle' };
 }
 
@@ -169,6 +218,10 @@ export class MirrorStore extends EventEmitter {
     if (record.type === 'session_meta') {
       state.id = payload.id ?? payload.session_id ?? state.id;
       state.cwd = typeof payload.cwd === 'string' ? payload.cwd : state.cwd;
+      if (typeof payload.thread_source === 'string') state.threadSource = payload.thread_source;
+      const source = payload.source;
+      if (typeof source === 'string') state.sourceKind = source;
+      else if (source && typeof source === 'object') state.sourceKind = Object.keys(source).join(',');
       state.timestamp ||= payload.timestamp || '';
       return;
     }
@@ -189,6 +242,7 @@ export class MirrorStore extends EventEmitter {
       text = typeof payload.message === 'string' ? payload.message : typeof payload.text === 'string' ? payload.text :
         Array.isArray(payload.content) ? payload.content.filter(item => item && typeof item.text === 'string').map(item => item.text).join('\\n') : '';
     }
+    if (role === 'user') text = stripAttachmentPreamble(text);
     if (!role || typeof text !== 'string' || !text.trim()) return;
     if (payload.id) {
       const key = `${source}:${payload.id}`;
@@ -202,7 +256,7 @@ export class MirrorStore extends EventEmitter {
       pending[opposite].shift();
     } else {
       const message = { id: payload.id || `${state.id || path.basename(state.file)}:${offset}`,
-        role, text, timestamp: record.timestamp || null };
+        role, text, timestamp: record.timestamp || null, injected: isInjected(text, role) };
       state.messages.push(message);
       pending[source].push(message);
     }
@@ -215,9 +269,29 @@ export class MirrorStore extends EventEmitter {
       const id = state.id || path.basename(state.file).match(/[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}/i)?.[0];
       if (!id) continue;
       const title = this.titles.get(id);
-      const session = { id, title: title?.thread_name || title?.title || state.messages.find(m => m.role === 'user')?.text.slice(0, 80) || id,
-        cwd: state.cwd, updatedAt: newer(state.timestamp, title?.updated_at) || state.timestamp || '',
-        messages: state.messages, status: state.archived ? 'archived' : state.status };
+      const visible = state.messages.filter(message => !message.injected);
+      const last = visible[visible.length - 1];
+      const firstUser = visible.find(message => message.role === 'user');
+      const named = typeof title?.thread_name === 'string' ? title.thread_name
+        : typeof title?.title === 'string' ? title.title : '';
+      const kind = kindOf(state);
+      const fallback = kind === 'review' ? `自动审查会话 · ${id.slice(0, 8)}`
+        : kind === 'subagent' ? `子代理会话 · ${id.slice(0, 8)}` : id;
+      const session = {
+        id,
+        title: named.trim() ? oneLine(named, 120)
+          : firstUser ? oneLine(firstUser.text, 100) : fallback,
+        cwd: state.cwd,
+        updatedAt: newer(state.timestamp, title?.updated_at) || state.timestamp || '',
+        kind,
+        archived: state.archived,
+        messageCount: state.messages.length,
+        visibleCount: visible.length,
+        injectedCount: state.messages.length - visible.length,
+        preview: last ? oneLine(last.text, 140) : '',
+        messages: state.messages,
+        status: state.archived ? 'archived' : state.status,
+      };
       // A session can briefly exist in both trees during archival.
       const previous = next.get(id);
       if (!previous || Date.parse(session.updatedAt) > Date.parse(previous.updatedAt) ||
